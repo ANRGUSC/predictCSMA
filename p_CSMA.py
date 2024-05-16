@@ -36,44 +36,43 @@ def check_for_collision(busy_nodes):
     return False
 
 def simulate_csma():
-    global node_states, time_slot_counter, success_counter
+    global node_s, time_slot_counter, success_counter
     for t in range(total_time_slots):
         print(f"Time Slot {t + 1}")
 
-        # Update states based on counters
+        # Update s based on counters
         for i in range(num_nodes):
             if time_slot_counter[i] > 0:
                 time_slot_counter[i] -= 1
                 if time_slot_counter[i] == 0:
-                    node_states[i] = 0
+                    node_s[i] = 0
 
         # Check if all nodes are idle
-        if np.all(node_states == 0):
-            # Determine new states based on transmission probabilities
+        if np.all(node_s == 0):
+            # Determine new s based on transmission probabilities
             for i in range(num_nodes):
                 if np.random.rand() < transmission_prob[i]:
-                    node_states[i] = 1
+                    node_s[i] = 1
                     time_slot_counter[i] = T
 
             # Check for collisions among neighbors
-            busy_nodes = np.where(node_states == 1)[0]
+            busy_nodes = np.where(node_s == 1)[0]
             if check_for_collision(busy_nodes):
                 for i in busy_nodes:
                     time_slot_counter[i] = T
                 print(f"Collision occurred among neighbors, nodes reset to idle after {T} time slots.")
             elif len(busy_nodes) > 0:
                 for busy_node in busy_nodes:
-                    node_states[busy_node] = 1
+                    node_s[busy_node] = 1
                     time_slot_counter[busy_node] = T
                     success_counter[busy_node] += 1  # Increment success counter
                 print(f"Nodes {busy_nodes} successfully transmitting for {T} time slots.")
             else:
                 print(f"No transmission occurred, nodes wait for {sigma} time slot.")
                 for i in range(num_nodes):
-                    node_states[i] = 0
+                    node_s[i] = 0
                     time_slot_counter[i] = sigma
 
-        state_history.append(node_states.copy())
         print(f"Node states: {node_states}")
         print(f"Time slot counters: {time_slot_counter}")
         print(f"Success counters: {success_counter}\n")
