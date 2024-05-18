@@ -67,7 +67,6 @@ for _ in range(num_samples):
     dataset.append(data)
     avg_throughputs.append(avg_throughput)
 
-
 # Split into training and testing sets
 train_dataset = dataset[:int(0.8 * len(dataset))]
 test_dataset = dataset[int(0.8 * len(dataset)):]
@@ -123,12 +122,12 @@ def test(loader):
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 model = model.to(device)
 
-for epoch in range(2000):
+for epoch in range(1000):
     train()
     train_error = test(train_loader)
     test_error = test(test_loader)
     if epoch % 200 == 0:
-      print(f'Epoch: {epoch}, Train Error: {train_error:.4f}, Test Error: {test_error:.4f}')
+        print(f'Epoch: {epoch}, Train Error: {train_error:.4f}, Test Error: {test_error:.4f}')
 
 # Evaluate model performance
 model.eval()
@@ -138,6 +137,32 @@ with torch.no_grad():
         out = model(data)
         actual = data.y.cpu().numpy()
         prediction = out.cpu().numpy()
-        print(f"Test Sample {i+1}:")
-        print(f"Actual Saturation Throughput: {np.mean(actual)}")
-        print(f"Predicted Saturation Throughput: {np.mean(prediction)}\n")
+        # print(f"Test Sample {i+1}:")
+        # print(f"Actual Saturation Throughput: {actual}")
+        # print(f"Predicted Saturation Throughput: {prediction}\n")
+
+# Test the model with specific transmission probabilities
+transmission_prob = [0.2, 0.3, 0.5, 0.3]
+G = np.array([
+    [0, 1, 0, 1],
+    [1, 0, 1, 0],
+    [0, 1, 0, 1],
+    [1, 0, 1, 0]
+])
+
+features, graph, target, avg_throughput = simulate_csma_and_collect_data(transmission_prob, G, total_time_slots, T, sigma)
+edge_index = np.array(np.nonzero(graph))
+test_data = Data(x=torch.tensor(features, dtype=torch.float).view(-1, 1), 
+                 edge_index=torch.tensor(edge_index, dtype=torch.long),
+                 y=torch.tensor(target, dtype=torch.float).view(1, -1))  # Modify target shape
+test_data = test_data.to(device)
+
+model.eval()
+with torch.no_grad():
+    out = model(test_data)
+    actual = test_data.y.cpu().numpy()
+    prediction = out.cpu().numpy()
+    print("Test with specific transmission probabilities:")
+    print(f"Transmission Probabilities: {transmission_prob}")
+    print(f"Actual Saturation Throughput: {actual}")
+    print(f"Predicted Saturation Throughput: {prediction}\n")
