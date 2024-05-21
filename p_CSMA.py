@@ -1,8 +1,7 @@
-# -*- coding: utf-8 -*-
 import numpy as np
 
 # Transmission probabilities
-transmission_prob = [0.2, 0.3, 0.5, 0.3]
+transmission_prob = [0.35428391, 0.40759993, 0.87345068, 0.25571536]
 
 # Adjacency matrix
 G = [
@@ -36,41 +35,39 @@ def check_for_collision(busy_nodes):
     return False
 
 def simulate_csma():
-    global node_s, time_slot_counter, success_counter
+    global node_states, time_slot_counter, success_counter
     for t in range(total_time_slots):
-        print(f"Time Slot {t + 1}")
-
-        # Update s based on counters
+        # Update states based on counters
         for i in range(num_nodes):
             if time_slot_counter[i] > 0:
                 time_slot_counter[i] -= 1
                 if time_slot_counter[i] == 0:
-                    node_s[i] = 0
+                    node_states[i] = 0
 
         # Check if all nodes are idle
-        if np.all(node_s == 0):
-            # Determine new s based on transmission probabilities
+        if np.all(node_states == 0):
+            # Determine new states based on transmission probabilities
             for i in range(num_nodes):
                 if np.random.rand() < transmission_prob[i]:
-                    node_s[i] = 1
+                    node_states[i] = 1
                     time_slot_counter[i] = T
 
             # Check for collisions among neighbors
-            busy_nodes = np.where(node_s == 1)[0]
+            busy_nodes = np.where(node_states == 1)[0]
             if check_for_collision(busy_nodes):
                 for i in busy_nodes:
                     time_slot_counter[i] = T
                 print(f"Collision occurred among neighbors, nodes reset to idle after {T} time slots.")
             elif len(busy_nodes) > 0:
                 for busy_node in busy_nodes:
-                    node_s[busy_node] = 1
+                    node_states[busy_node] = 1
                     time_slot_counter[busy_node] = T
                     success_counter[busy_node] += 1  # Increment success counter
                 print(f"Nodes {busy_nodes} successfully transmitting for {T} time slots.")
             else:
                 print(f"No transmission occurred, nodes wait for {sigma} time slot.")
                 for i in range(num_nodes):
-                    node_s[i] = 0
+                    node_states[i] = 0
                     time_slot_counter[i] = sigma
 
         print(f"Node states: {node_states}")
@@ -78,8 +75,7 @@ def simulate_csma():
         print(f"Success counters: {success_counter}\n")
 
 
-def therotical_saturation_throughput(transmission_prob, T, sigma, G):
-
+def theoretical_saturation_throughput(transmission_prob, T, sigma, G):
     num_nodes = len(transmission_prob)
     S = np.zeros(num_nodes)
 
@@ -87,7 +83,7 @@ def therotical_saturation_throughput(transmission_prob, T, sigma, G):
         p_i = transmission_prob[i]
         prod_other = np.prod([1 - transmission_prob[j] for j in range(num_nodes) if G[i][j] == 1 and j != i])
         numerator = p_i * prod_other * T
-        denominator = sigma * prod_other * (1 - p_i) + (p_i * prod_other) * T + (1- ((prod_other * (1 - p_i)) + p_i * prod_other)) * T
+        denominator = sigma * prod_other * (1 - p_i) + (p_i * prod_other) * T + (1 - ((prod_other * (1 - p_i)) + p_i * prod_other)) * T
 
         S[i] = numerator / denominator
 
@@ -95,10 +91,10 @@ def therotical_saturation_throughput(transmission_prob, T, sigma, G):
 
 # Run the CSMA simulation
 simulate_csma()
-theoretical_saturation_throughput = therotical_saturation_throughput(transmission_prob, T=T, sigma=sigma, G=G)
+theoretical_saturation_throughput = theoretical_saturation_throughput(transmission_prob, T=T, sigma=sigma, G=G)
 
 # Print the final success counters
 print("Final Success Counters:")
+saturation_throughput = success_counter * T / total_time_slots
 for i in range(num_nodes):
-    saturation_throughput = success_counter*T / total_time_slots
     print(f"Node {i}: {success_counter[i]} successful transmissions, saturation throughput: {saturation_throughput[i]:.4f}, theoretical saturation throughput: {theoretical_saturation_throughput[i]:.4f}")
