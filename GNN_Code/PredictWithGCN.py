@@ -184,7 +184,7 @@ def make_data(adj, p_vec, sat_thr):
 
 
 def load_trained_model(path: str) -> DGCNConv:
-    """Load your trained Enhanced GCN model with exact architecture."""
+    """Load your trained  DGCN model with exact architecture."""
     model = DGCNConv(INPUT_DIM, HIDDEN_DIMS, OUTPUT_DIM, 
                            dropout=0.5, mlp_layers=[64, 32])  # Match training exactly
     
