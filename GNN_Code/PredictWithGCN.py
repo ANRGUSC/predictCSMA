@@ -16,7 +16,7 @@ Quick start
 -----------
 1.  Put your CSV next to this file, e.g. `evaluation_set.csv`.
 2.  Update `CSV_PATH` below.
-3.  Run: `python predict_saturation_throughput_enhanced_gcn.py`
+3.  Run: `python predict_saturation_throughput_dgcn.py`
 """
 
 from __future__ import annotations
@@ -81,23 +81,21 @@ except ImportError:
         def update(self, aggr_out):
             return aggr_out
 
-    class EnhancedGCNConv(nn.Module):
+    class DGCNConv(nn.Module):
         """
-        Enhanced GCN that incorporates key RGCN techniques: add mlp at the e
+          DGCN 
         - Separate transformations for self and neighbor features
-        - Mean aggregation like RGCN
         - No symmetric normalization
-        This architecture mimics RGCN behavior for better performance
         """
         def __init__(self, input_dim, hidden_dims, output_dim, dropout=0.5, mlp_layers=[64, 32]):
-            super(EnhancedGCNConv, self).__init__()
+            super(DGCNConv, self).__init__()
             
             self.layers = nn.ModuleList()
             
             # Build the layer dimensions
             dims = [input_dim] + hidden_dims + [hidden_dims[-1]]  # Keep last hidden dim
             
-            # Create enhanced GCN layers
+            # Create  DGCN layers
             for i in range(len(dims) - 1):
                 layer = EnhancedGCNLayerNoNorm(dims[i], dims[i+1])
                 self.layers.append(layer)
@@ -185,9 +183,9 @@ def make_data(adj, p_vec, sat_thr):
     return Data(x=x, edge_index=edge_index, y=y)
 
 
-def load_trained_model(path: str) -> EnhancedGCNConv:
+def load_trained_model(path: str) -> DGCNConv:
     """Load your trained Enhanced GCN model with exact architecture."""
-    model = EnhancedGCNConv(INPUT_DIM, HIDDEN_DIMS, OUTPUT_DIM, 
+    model = DGCNConv(INPUT_DIM, HIDDEN_DIMS, OUTPUT_DIM, 
                            dropout=0.5, mlp_layers=[64, 32])  # Match training exactly
     
     try:
@@ -295,7 +293,7 @@ def run_csv_evaluation(path: str) -> None:
 
     print(f"\n{'='*80}")
     print(f"Evaluating {len(df)} graphs from '{Path(path).name}'")
-    print(f"Model: Enhanced GCN with {sum(p.numel() for p in MODEL.parameters() if p.requires_grad):,} parameters")
+    print(f"Model:  DGCN with {sum(p.numel() for p in MODEL.parameters() if p.requires_grad):,} parameters")
     print(f"{'='*80}")
 
     for idx, row in df.iterrows():
@@ -390,7 +388,7 @@ def run_inline_demo():
 # ---------------------------------------------------------------------------
 
 if __name__ == "__main__":
-    print("Enhanced GCN Saturation Throughput Predictor")
+    print(" DGCN Saturation Throughput Predictor")
     print(f"Model architecture: {INPUT_DIM} → {HIDDEN_DIMS} → {OUTPUT_DIM}")
     
     if CSV_PATH and Path(CSV_PATH).exists():
