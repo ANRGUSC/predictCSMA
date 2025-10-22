@@ -1,8 +1,4 @@
 
-#!/usr/bin/env python
-# ─────────────────────────────────────────────────────────────────────────────
-#  GCN — node features = [ p_i ]
-# ─────────────────────────────────────────────────────────────────────────────
 import torch
 import torch.nn.functional as F
 from torch_geometric.nn import GCNConv
@@ -11,11 +7,11 @@ import torch.nn as nn
 import numpy as np
 import pandas as pd, ast, random, matplotlib.pyplot as plt
 from sklearn.model_selection import train_test_split
-from GNN_Architecture import GCN, DGCNConv 
+from GNN_Architecture import DGCNConv 
 # --------------------------------------------------------------------------- #
 # SETTINGS                                                                    #
 # --------------------------------------------------------------------------- #
-T=7
+T=5
 CSV_PATH   = 'Data/5_data_million.csv'
 BATCH_SIZE = 32
 EPOCHS     = 200
@@ -36,7 +32,6 @@ def make_data(adj, p_vec, sat_thr):
     N = len(p_vec)
     
 
-    # x = torch.tensor(np.array(p_vec).reshape(-1, 1), dtype=torch.float)
     x = torch.tensor(np.column_stack([p_vec
                                       ]), dtype=torch.float)
     y = torch.tensor((sat_thr), dtype=torch.float).view(-1, 1)
@@ -50,8 +45,6 @@ def load_dataset(path):
         G   = ast.literal_eval(r['adj_matrix'])
         p   = ast.literal_eval(r['transmission_prob'])
         sat = ast.literal_eval(r['saturation_throughput'])
-        # theo = ast.literal_eval(r['theoretical_throughput'])
-        # d = make_data(G, p, sat, theo)
         d = make_data(G, p, sat)
         if d is not None:
             data.append(d)
@@ -68,7 +61,7 @@ test_loader  = DataLoader(test,  batch_size=BATCH_SIZE)
 # --------------------------------------------------------------------------- #
 # 2) MODEL / OPTIMISER / LOSS                                                 #
 # --------------------------------------------------------------------------- #
-input_dim   = 1                    # ← ONLY p_i
+input_dim   = 1                   
 hidden_dims = [64]*7
 output_dim  = 1
 model       = DGCNConv(input_dim, hidden_dims, output_dim)
@@ -83,7 +76,7 @@ scheduler  = torch.optim.lr_scheduler.ReduceLROnPlateau(opt, 'min',
 criterion   = nn.MSELoss()
 
 # --------------------------------------------------------------------------- #
-# 5) EVALUATION (no theoretical column anymore)                               #
+# 5) EVALUATION                             
 # --------------------------------------------------------------------------- #
 def evaluate(model, loader):
     model.eval()
