@@ -106,7 +106,7 @@ class SAGEwithMlp(nn.Module):
         dims = [input_dim] + hidden_dims
 
         for i in range(len(hidden_dims)):
-            self.convs.append(SAGEConv(dims[i], dims[i+1],aggr='add'))
+            self.convs.append(SAGEConv(dims[i], dims[i+1]))
             self.mlps.append(nn.Sequential(
                 nn.Linear(dims[i+1], dims[i+1]),
                 nn.ReLU(),
@@ -114,7 +114,7 @@ class SAGEwithMlp(nn.Module):
             ))
 
         # Extra GCNConv + MLP layer (parity with your GINNet)
-        self.convs.append(SAGEConv(hidden_dims[-1], hidden_dims[-1],aggr='add'))
+        self.convs.append(SAGEConv(hidden_dims[-1], hidden_dims[-1]))
         self.mlps.append(nn.Sequential(
             nn.Linear(hidden_dims[-1], hidden_dims[-1]),
             nn.ReLU(),
